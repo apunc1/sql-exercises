@@ -1,0 +1,102 @@
+--create three tables emp, dept and orders
+
+CREATE TABLE emp (
+  emp_id INT PRIMARY KEY,
+  first_name VARCHAR(40),
+  sex VARCHAR(1),
+    department_id INT,
+  salary INT,
+  mgr_id INT
+);
+
+CREATE TABLE dept (
+  dep_id INT PRIMARY KEY,
+  dep_name VARCHAR(40)
+);
+
+CREATE TABLE orders (
+  customer_name VARCHAR(40),
+  order_date DATE,
+  order_amount INT,
+  customer_gender VARCHAR(1)
+);
+
+ALTER TABLE emp
+DROP COLUMN sex;
+
+--fill tables with data
+
+INSERT INTO emp VALUES(1, 'Ankit', 100, 10000, 4);
+INSERT INTO emp VALUES(2, 'Mohit', 100, 15000, 5);
+INSERT INTO emp VALUES(3, 'Vikas', 100, 10000, 4);
+INSERT INTO emp VALUES(4, 'Rohit', 100, 5000, 2);
+INSERT INTO emp VALUES(5, 'Middit', 200, 12000, 6);
+INSERT INTO emp VALUES(6, 'Agam', 200, 12000, 2);
+INSERT INTO emp VALUES(7, 'Sanjay', 200, 9000, 2);
+INSERT INTO emp VALUES(8, 'Ashish', 200, 5000, 2);
+
+INSERT INTO dept VALUES(100, 'Analytics');
+INSERT INTO dept VALUES(300, 'IT');
+
+INSERT INTO orders VALUES('Shilpa', '2020-01-01', 10000, 'M');
+INSERT INTO orders VALUES('Rahul', '2020-01-02', 12000, 'F');
+INSERT INTO orders VALUES('SHILPA', '2020-01-02', 12000, 'M');
+INSERT INTO orders VALUES('Rohit', '2020-01-03', 15000, 'F');
+INSERT INTO orders VALUES('shilpa', '2020-01-03', 14000, 'M');
+
+select * from emp;
+
+--Find Duplicate department IDs in the emp table
+select department_id, count(1) 
+from emp 
+group by department_id 
+having count(1)>1;
+
+
+--Find employees not present in department table
+select * from emp where department_id not in (select dep_id from dept);
+--if do not want nested query can do a join
+select * from emp
+left join dept on emp.department_id=dept.dep_id
+where dept.dep_name is null;
+
+--find second highest salary in each department
+--i think this is sqlserver syntax, i am using SQLlite via dbeaver so i need to alter syntax
+select * from (select emp.*, rank() over (partition by department_id order by salary desc) as rn from emp) a 
+where rn=2;
+--SQLlite syntax
+select * from (
+SELECT
+	emp.*,
+	RANK () OVER ( 
+		PARTITION BY department_id
+		ORDER BY salary DESC
+	) rn 
+FROM
+	emp
+)
+	where rn=2
+	
+	
+	--find all employees who have salary larger than their manager
+	--self join
+	select * from emp e
+	inner join emp m on e.mgr_id=m.emp_id
+	where e.salary>m.salary;
+	
+--find all customers named Shilpa for all cases entered; i.e upper, proper, lower
+select * from orders where upper(customer_name) ='SHILPA';
+
+--Find a list of employee and customer names
+select first_name as emp_cust_names from emp 
+union all select
+customer_name from orders;
+
+--display department name for each employee
+--remember dept 200 is in emp but not dept
+select first_name, department_id, dep_name from emp, dept
+where emp.department_id=dept.dep_id
+group by first_name, department_id, dep_name
+order by department_id;
+
+
